@@ -50,13 +50,14 @@ CustomerRepository  VaultRepository
 | 🔄 **Transactional Safety** | Deletion and updates occur within transactions to ensure integrity. |
 | ✅ **One-Time Access**       | Once decrypted successfully, data is deleted to ensure secrecy.     |
 
+
 ---
 
 ## 💪 Tech Stack
 
 | Technology      | Purpose                  |
 |-----------------|--------------------------|
-| Java 17+        | Core Language            |
+| Java 21+        | Core Language            |
 | Spring Boot     | Backend framework        |
 | Spring Data JPA | ORM for DB interactions  |
 | Hibernate       | Persistence provider     |
@@ -64,6 +65,66 @@ CustomerRepository  VaultRepository
 | Lombok          | Reduces boilerplate code |
 | AES Encryption  | Encrypting data at rest  |
 | BCrypt          | Hashing user keys        |
+
+---
+### 📌 Auth API Endpoints
+
+### 🔐 `Sign Up (Register)`
+* Endpoint:
+* POST /api/auth/sign-up
+
+* Description:
+* Register a new user with a vault initialized with dummy data.
+
+* **Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "userName": "john_doe",
+  "password": "securePassword"
+}
+
+```
+* **Success Response:**
+
+```successfully sign-up!```
+
+
+* **Error Response:**
+  `400` Bad Request.
+
+---
+
+### 🔐 `Sign In (Login)`
+* Endpoint:
+* POST /api/auth/sign-in
+
+* Description:
+* Authenticate a user and receive a JWT token.
+
+* **Request Body:**
+```json
+{
+  "userName": "exampleUser",
+  "password": "examplePassword"
+  }
+```
+* **Response Example:**
+ 
+```json
+{
+  "accessToken": "jwt_token_here",
+  "tokenType": "Bearer"
+}
+```
+
+* **Error Response:**
+  `401` Unauthorized if credentials are invalid.
+
+
+
+
 
 ---
 
@@ -138,8 +199,8 @@ CustomerRepository  VaultRepository
 |----------|--------|---------------------|
 | userName | String | Primary Key, Unique |
 | email    | String | Unique, Not null    |
-| name     | String |                     |
-| password | String |                     |
+| name     | String | Not null            |
+| password | String | Not null            |
 
 ### Vault
 
@@ -164,7 +225,7 @@ CustomerRepository  VaultRepository
 1. **Clone the Repo**
 
 ```bash
-git clone https://github.com/yourusername/SecureEchoAPI.git
+git clone https://github.com/ashishchaudhary9523/SecureEchoAPI.git
 cd SecureEchoAPI
 ```
 
@@ -172,9 +233,9 @@ cd SecureEchoAPI
    Update `application.properties`:
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/secure_echo
-spring.datasource.username=root
-spring.datasource.password=yourpassword
+spring.datasource.url=your_database_url
+spring.datasource.username=your_database_username
+spring.datasource.password=your_password
 spring.jpa.hibernate.ddl-auto=update
 ```
 
@@ -189,11 +250,11 @@ spring.jpa.hibernate.ddl-auto=update
 
 ---
 
-## 🧹 Future Enhancements
+## 🧹 Enhancements
 
 * JWT authentication for API access.
 * Configurable max failed attempts.
-* Vault expiry based on time.
+* The user can only access vault.
 * Audit logs for access and deletion.
 * Deployment via Docker.
 
@@ -201,14 +262,16 @@ spring.jpa.hibernate.ddl-auto=update
 
 ## 👨‍💼 Developed By
 
-* **Ashish**
+* **Ashish Kumar**
 * [Github](https://github.com/ashishchaudhary9523)
+* [Linkedin](https://www.linkedin.com/in/ashish-kumar-0333b8373)
+* [Instagram](https://www.instagram.com/active.vicky_?igsh=cTRqZGdrbndyYTVw)
 
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License**.
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 

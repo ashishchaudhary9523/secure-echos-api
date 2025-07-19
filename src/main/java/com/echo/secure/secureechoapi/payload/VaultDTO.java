@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VaultDTO {
-
     @NotEmpty
     private String userName;
     @NotEmpty

@@ -2,15 +2,16 @@ package com.echo.secure.secureechoapi.service.implementation;
 
 import com.echo.secure.secureechoapi.AESUtil.AESUtil;
 import com.echo.secure.secureechoapi.Exceptions.SecureEchoAPIException;
+import com.echo.secure.secureechoapi.model.Customer;
 import com.echo.secure.secureechoapi.model.Vault;
 import com.echo.secure.secureechoapi.payload.VaultDTO;
 import com.echo.secure.secureechoapi.repository.CustomerRepository;
 import com.echo.secure.secureechoapi.repository.VaultRepository;
 import com.echo.secure.secureechoapi.service.VaultService;
 import jakarta.transaction.Transactional;
-import org.hibernate.validator.internal.constraintvalidators.bv.number.bound.decimal.DecimalMaxValidatorForInteger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,17 +31,25 @@ public class VaultServiceImplementation implements VaultService {
 
     @Override
     public String storeVault(VaultDTO vaultDTO) throws Exception {
-        if(vaultRepository.existsById(vaultDTO.getUserName())){
+        String currentUserName = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(!vaultDTO.getUserName().equals(currentUserName)){
+            return "You are not authorized to access this resource. Please contact your administrator for further assistance.";
+        }
+
+        if(!vaultRepository.existsById(vaultDTO.getUserName())){
+            return "User not found. Maybe you need to sign-up first?";
+        }
+        Vault vault = vaultRepository.findByUserName(vaultDTO.getUserName());
+        if(vaultRepository.existsById(vaultDTO.getUserName()) && vault.getIsUpdated()){
             return vaultDTO.getUserName() + "'s vault already exists. Cannot create a new one. Please contact your administrator for further assistance.";
         }
             String encrypted = AESUtil.encrypt(vaultDTO.getEncryptedData(), vaultDTO.getKey());
             String keyHash = passwordEncoder.encode(vaultDTO.getKey());
 
-            Vault vault = new Vault();
-            vault.setUserName(vaultDTO.getUserName());
             vault.setEncryptedData(encrypted);
             vault.setKey(keyHash);
             vault.setFailedAttempts(0);
+            vault.setIsUpdated(true);
 
             vaultRepository.save(vault);
             return "Data saved";
@@ -48,44 +57,33 @@ public class VaultServiceImplementation implements VaultService {
 
     @Transactional
     @Override
-    public String getVault(String userName, String key) throws Exception {
-        Vault vault = vaultRepository.findById(userName)
+    public String getVault(String userName, String key) {
+        String currentUserName = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(!userName.equals(currentUserName)){
+            return "You are not authorized to access this resource. Please contact your administrator for further assistance.";
+        }
+        Customer customer = customerRepository.findById(userName)
                 .orElseThrow(() -> new SecureEchoAPIException(HttpStatus.NOT_FOUND , "User not found"));
-        System.out.println(vault);
+        Vault vault = customer.getVault();
         if(passwordEncoder.matches(key , vault.getKey())){
-//            vault.setFailedAttempts(0);
             System.out.println("Key matched");
-            String data =  AESUtil.decrypt(vault.getEncryptedData() , key);
-            delete(vault.getUserName());
+            String data = null;
+            try {
+                data = AESUtil.decrypt(vault.getEncryptedData() , key);
+            } catch (Exception e) {
+                return "Failed to decrypt data" + e.getMessage();
+            }
+            customerRepository.delete(customerRepository.findByUserName(userName));
             return data;
         } else {
-            vault.setFailedAttempts(vault.getFailedAttempts() + 1);
-            vaultRepository.save(vault);
-            System.out.println("Key not matched");
+            vaultRepository.updateFailedAttempts(vault.getFailedAttempts()+1 , userName);
             if(vault.getFailedAttempts() >= 3){
-                delete(vault.getUserName());
-                throw new SecureEchoAPIException(HttpStatus.UNAUTHORIZED , "The vault has been deleted for 3 failed attempts. Please contact your administrator for further assistance.");
+                customerRepository.delete(customerRepository.findByUserName(userName));
+                return "The vault has been deleted for 3 failed attempts. Please contact your administrator for further assistance.";
             } else {
-                throw new SecureEchoAPIException(HttpStatus.UNAUTHORIZED , "The key is incorrect. Please try again. You are left with " + (3-vault.getFailedAttempts()) + " attempts." );
+                return "The key is incorrect. Please try again. You are left with " + (3-vault.getFailedAttempts()) + " attempts.";
             }
         }
     }
-    private void delete(String userName){
-        customerRepository.delete(customerRepository.findByUserName(userName));
-        vaultRepository.deleteByUserName(userName);
-        vaultRepository.flush();
-        customerRepository.flush();
-        System.out.println("deleted");
-    }
-
-
-//    private VaultDTO vaulttoVaultDTO(Vault vault){
-//        VaultDTO vaultDTO = new VaultDTO();
-//        vaultDTO.setUserName(vault.getUserName());
-//        vaultDTO.setEncryptedData(vault.getEncryptedData());
-//        vaultDTO.setKey(vault.getKey());
-//        vaultDTO.setFailedAttempts(vault.getFailedAttempts());
-//        return vaultDTO;
-//    }
 
 }

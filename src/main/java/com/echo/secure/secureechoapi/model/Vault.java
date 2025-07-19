@@ -15,6 +15,11 @@ public class Vault {
     private String encryptedData;
 
     private String key;
-    private int failedAttempts = 0;
+    private Integer failedAttempts;
+    private Boolean isUpdated = false;
 
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "user_name")
+    private Customer customer;
 }

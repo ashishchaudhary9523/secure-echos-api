@@ -8,9 +8,6 @@ import lombok.Data;
 @Table(name = "customer" , uniqueConstraints = {@UniqueConstraint(columnNames = {"userName"}) ,
         @UniqueConstraint(columnNames = {"email"})})
 public class Customer {
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    private Long id;
 
     private String name;
     @Id
@@ -18,5 +15,8 @@ public class Customer {
     @Column(unique = true , nullable = false)
     private String email;
     private String password;
+
+    @OneToOne(mappedBy = "customer" , cascade = CascadeType.ALL , orphanRemoval = true)
+    private Vault vault;
 
 }
