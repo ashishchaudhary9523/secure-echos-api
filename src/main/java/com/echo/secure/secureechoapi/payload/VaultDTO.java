@@ -15,7 +15,7 @@ public class VaultDTO {
     @NotEmpty
     private String encryptedData;
     @NotEmpty
-    @Size(min = 16 , max = 16)
+    @Size(min = 16 , max = 16 , message = "The key must be of 16 chars")
     private String key;
 
     private int failedAttempts = 0;
